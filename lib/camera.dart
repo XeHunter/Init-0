@@ -108,45 +108,58 @@ class _CameraState extends State<Camera> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Camera and Upload'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            ElevatedButton(
-              onPressed: _takePicture,
-              child: Text('Take Picture'),
+      body: Column(
+        children: <Widget>[
+          SizedBox(height: 50,),
+          if (_image != null)
+            FutureBuilder<Uint8List>(
+              future: File(_image!.path).readAsBytes(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done &&
+                    snapshot.hasData) {
+                  return Image.memory(
+                    snapshot.data!,
+                    width: 350,
+                    height: 400,
+                  );
+                } else {
+                  return Container();
+                }
+              },
             ),
-            SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: _openBottomSheet,
-              child: Text('Upload Files'),
+          if (_image == null)
+            Container(
+              width: 350,
+              height: 450,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.grey,
+                  style: BorderStyle.solid,
+                  width: 1.0,
+                ),
+                borderRadius: BorderRadius.circular(10.0),
+              ),
+              child: Opacity(
+                opacity: 0.5,
+                child: Image.asset('assets/pick.png',height: 400, width: 400,),
+              ),
             ),
-            if (_image != null)
-              FutureBuilder<Uint8List>(
-                future: File(_image!.path).readAsBytes(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done &&
-                      snapshot.hasData) {
-                    return Image.memory(
-                      snapshot.data!,
-                      width: 100,
-                      height: 100,
-                    );
-                  } else {
-                    return Container();
-                  }
-                },
+          SizedBox(height: 60,),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                onPressed: _takePicture,
+                child: Text('Take Picture'),
               ),
-            if (location.isNotEmpty)
-              Text(
-                'Location: $location',
-                style: TextStyle(fontSize: 16),
+              SizedBox(width: 26.0),
+              ElevatedButton(
+                onPressed: _openBottomSheet,
+                child: Text('Upload Files'),
               ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }

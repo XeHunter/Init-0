@@ -5,6 +5,9 @@ import 'package:ace/map.dart';
 import 'package:ace/rewards.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -16,6 +19,8 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
 
   int _index = 0;
+
+  String name = "Loading...";
 
   List<Widget> _screens = [
     Feed(),
@@ -35,13 +40,47 @@ class _HomeState extends State<Home> {
   ];
 
   @override
+  void initState() {
+    _location();
+    super.initState();
+  }
+
+  final picker = ImagePicker();
+
+  Future<void> _location() async {
+
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      double latitude = position.latitude;
+      double longitude = position.longitude;
+
+      List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+      Placemark place = placemarks.first;
+      String address = "${place.name}, ${place.locality}, ${place.country}";
+
+      setState(() {
+        name = place.name!;
+      });
+
+    }
+
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      backgroundColor: Colors.blue,
       appBar: AppBar(
-        title: Text("Home"),
-        centerTitle: true,
+        elevation: 4, // Adjust the elevation value according to the desired shadow size
+        shadowColor: Colors.grey,
+        title: Row(
+          children: [
+            Icon(Icons.location_on),
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: Text(name),
+            )
+          ],
+        ),
       ),
       body: Stack(
         children: [
@@ -59,8 +98,8 @@ class _HomeState extends State<Home> {
             iconTheme: IconThemeData(color: Colors.white)
         ),
         child: CurvedNavigationBar(
-          color: Color(0xFF1C1C1C),
-          buttonBackgroundColor: Color(0xFFFE3044),
+          color: Colors.grey,
+          buttonBackgroundColor: Colors.blueAccent,
           backgroundColor: Colors.transparent,
           items: items,
           height: 60,
