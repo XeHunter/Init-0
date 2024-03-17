@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Advanced Routing with HERE Maps</title>
+    <meta charset="utf-8" />
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+            overflow: auto; /* Add overflow property to make the map scrollable */
+        }
+
+        .bold-route {
+            stroke-width: 8px; /* Increase the stroke width to make the route bold */
+        }
+    </style>
+</head>
+<body>
+    <h1>Advanced Routing with HERE Maps</h1>
+    <div id="map"></div>
+
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-core.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-service.js"></script>
+    <script>
+        // Initialize the HERE platform
+        var platform = new H.service.Platform({
+            'apikey': 'tVU-lflZPKnY0sBfWfPot64Z6bmfHVIRyc8aAIuX2SA'
+        });
+
+        // Obtain the default map types from the platform object
+        var defaultLayers = platform.createDefaultLayers();
+
+        // Instantiate (and display) a map object
+        var map = new H.Map(
+            document.getElementById('map'),
+            defaultLayers.vector.normal.map,
+            {
+                zoom: 10,
+                center: { lat: 52.5, lng: 13.4 }
+            });
+
+        // Enable the event system on the map instance
+        var mapEvents = new H.mapevents.MapEvents(map);
+
+        // Instantiate the default behavior, providing the mapEvents object:
+        var behavior = new H.mapevents.Behavior(mapEvents);
+
+        // Instantiate the routing service
+        var router = platform.getRoutingService();
+
+        // Define locations
+        var locations = [
+            { name: "Location A", lat: 52.516, lng: 13.377 },
+            { name: "Location B", lat: 52.522, lng: 13.415 },
+            { name: "Location C", lat: 52.526, lng: 13.402 },
+            { name: "Location D", lat: 52.51, lng: 13.385 }
+        ];
+
+        // Calculate the route
+        var routeRequestParams = {
+            mode: 'fastest;car;traffic:enabled',
+            representation: 'display',
+            routeattributes: 'waypoints,summary,shape,legs',
+            maneuverattributes: 'direction,action',
+            waypoint0: 'geo!' + locations[0].lat + ',' + locations[0].lng,
+            waypoint1: 'geo!' + locations[1].lat + ',' + locations[1].lng,
+            waypoint2: 'geo!' + locations[2].lat + ',' + locations[2].lng,
+            waypoint3: 'geo!' + locations[3].lat + ',' + locations[3].lng
+        };
+
+        router.calculateRoute(routeRequestParams, onSuccess, onError);
+
+        // Success callback function
+        function onSuccess(result) {
+            var route = result.response.route[0];
+            var strip = new H.geo.Strip();
+            route.shape.forEach(function (point) {
+                var parts = point.split(',');
+                strip.pushLatLngAlt(parts[0], parts[1]);
+            });
+
+            var polyline = new H.map.Polyline(strip, {
+                style: { lineWidth: 5 },
+                arrows: { fillColor: 'white', frequency: 2, width: 0.8, length: 0.7 }
+            });
+
+            polyline.setStyle({ lineWidth: 8 }); // Make the route bold
+            map.addObject(polyline);
+            map.setViewBounds(polyline.getBounds());
+
+            // Display road signs (simplified example)
+            route.legs.forEach(function (leg) {
+                leg.signs.forEach(function (sign) {
+                    var marker = new H.map.Marker({
+                        lat: sign.position.latitude,
+                        lng: sign.position.longitude
+                    });
+                    map.addObject(marker);
+                });
+            });
+        }
+
+        // Error callback function
+        function onError(error) {
+            console.error('Routing error:', error);
+        }
+    </script>
+</body>
+</html>
